@@ -222,11 +222,8 @@ function init() {
 	document.getElementById('onoff').addEventListener('click', function(e) {
 		shouldrun = ! shouldrun;
 
-		if (this.innerHTML == '- O') {
-			this.innerHTML = 'O -';
-		} else {
-			this.innerHTML = '- O';
-		}
+		this.classList.toggle('red');
+		this.classList.toggle('blue');
 
 		console.log("should run " + shouldrun);
 	});
