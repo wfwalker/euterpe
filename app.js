@@ -5,7 +5,7 @@
 
 var context;
 
-var shouldrun = false;
+var shouldrun = true;
 
 window.addEventListener('load', init, false);
 
@@ -64,6 +64,8 @@ function createVolumeMeter(inContext) {
 	return analyser;
 }
 
+// holy cats look at this http://www.openairlib.net/auralizationdb
+
 function createReverb(inContext) {
 	// Again, the context handles the difficult bits
 	var convolver = inContext.createConvolver();
@@ -86,8 +88,6 @@ function createReverb(inContext) {
 		}, function (error) {
 			console.log("error " + error);
 		});
-
-		// convolver.buffer = inContext.createBuffer(2, request.response, false);
 	}
 
 	request.send();
@@ -114,7 +114,7 @@ function hihat(inGain, time) {
 }
 
 // thanks to http://noisehack.com/generate-noise-web-audio-api/
-function createWhiteNoiseSource(inContext, inReverb, inAnalyzer, inStartTime) {
+function createWhiteNoiseSource(inContext, inReverb, inStartTime) {
 	var bufferSize = 2 * inContext.sampleRate;
 	noiseBuffer = inContext.createBuffer(1, bufferSize, inContext.sampleRate);
 	output = noiseBuffer.getChannelData(0);
@@ -136,7 +136,6 @@ function createWhiteNoiseSource(inContext, inReverb, inAnalyzer, inStartTime) {
 	gain.connect(panner);
 
 	// wire up panner to destination and analyzer
-	panner.connect(inAnalyzer);
 	panner.connect(inReverb);
 
 	// initialize gain.gain, start whitenoise
@@ -166,7 +165,7 @@ function octavizer(inOscillator, inGain, inBaseFreq, time) {
 	setTimeout( function() { octavizer(inOscillator, inGain, inBaseFreq, time + 4); }, 4000);
 }
 
-function initializeOctavizer(inContext, inReverb, inAnalyzer, inStartTime, inBaseFreq) {
+function initializeOctavizer(inContext, inReverb, inStartTime, inBaseFreq) {
 	// create oscillator
 	oscillator = inContext.createOscillator();
 	types = ['square', 'triangle', 'sine', 'sawtooth'];
@@ -184,7 +183,6 @@ function initializeOctavizer(inContext, inReverb, inAnalyzer, inStartTime, inBas
 
 	// wire up panner to destination and analyzer
 	panner.connect(inReverb);
-	panner.connect(inAnalyzer);
 
 	// turn down gain, start oscillator
 	gain.gain.value = 0;
@@ -202,21 +200,23 @@ function init() {
 
 	var theReverb = createReverb(context);
 
-	createWhiteNoiseSource(context, theReverb, theAnalyzer, 5);
-	createWhiteNoiseSource(context, theReverb, theAnalyzer, 9.5);
-	createWhiteNoiseSource(context, theReverb, theAnalyzer, 13.25);
-	createWhiteNoiseSource(context, theReverb, theAnalyzer, 17.75);
-	createWhiteNoiseSource(context, theReverb, theAnalyzer, 21.125);
+	theReverb.connect(theAnalyzer);
 
-	initializeOctavizer(context, theReverb, theAnalyzer, 1, 220);
-	initializeOctavizer(context, theReverb, theAnalyzer, 1.125, 440);
-	initializeOctavizer(context, theReverb, theAnalyzer, 1.25, 220);
-	initializeOctavizer(context, theReverb, theAnalyzer, 1.5, 220);
-	initializeOctavizer(context, theReverb, theAnalyzer, 1.75, 110);
-	initializeOctavizer(context, theReverb, theAnalyzer, 2, 220);
-	initializeOctavizer(context, theReverb, theAnalyzer, 2.25, 440);
-	initializeOctavizer(context, theReverb, theAnalyzer, 2.5, 220);
-	initializeOctavizer(context, theReverb, theAnalyzer, 2.75, 880);
+	createWhiteNoiseSource(context, theReverb, 5);
+	createWhiteNoiseSource(context, theReverb, 9.5);
+	createWhiteNoiseSource(context, theReverb, 13.25);
+	createWhiteNoiseSource(context, theReverb, 17.75);
+	createWhiteNoiseSource(context, theReverb, 21.125);
+
+	initializeOctavizer(context, theReverb, 1, 220);
+	initializeOctavizer(context, theReverb, 1.125, 440);
+	initializeOctavizer(context, theReverb, 1.25, 220);
+	initializeOctavizer(context, theReverb, 1.5, 220);
+	initializeOctavizer(context, theReverb, 1.75, 110);
+	initializeOctavizer(context, theReverb, 2, 220);
+	initializeOctavizer(context, theReverb, 2.25, 440);
+	initializeOctavizer(context, theReverb, 2.5, 220);
+	initializeOctavizer(context, theReverb, 2.75, 880);
 	updateclock(context);
 
 	document.getElementById('onoff').addEventListener('click', function(e) {
