@@ -3,6 +3,13 @@
 // TODO: VU meter like this: http://css.dzone.com/articles/exploring-html5-web-audio
 // see also http://www.smartjava.org/examples/webaudio/example2.html
 
+// TODO: add Potch's PianoThing
+// https://wiki.mozilla.org/Webdev/Beer_And_Tell/May2014
+// http://bits.potch.me/piano.html
+// http://bits.potch.me/piano.html?big
+// Osmose recording mod: https://gist.github.com/Osmose/2664ed7e919e91a29909
+
+
 var context;
 
 var shouldrun = true;
@@ -66,31 +73,41 @@ function createVolumeMeter(inContext) {
 
 // holy cats look at this http://www.openairlib.net/auralizationdb
 
-function createReverb(inContext) {
-	// Again, the context handles the difficult bits
-	var convolver = inContext.createConvolver();
+function createReverb(inContext, inReally) {
+	var convolver;
 
-	// Wiring
-	convolver.connect(inContext.destination);
+	if (inReally) {
+		// ask context to really create reverb
+		var convolver = inContext.createConvolver();
 
-	// load the impulse response asynchronously
-	var request = new XMLHttpRequest();
-	request.open("GET", "./Church-Schellingwoude.mp3", true);
-	request.responseType = "arraybuffer";
+		// Wiring
+		convolver.connect(inContext.destination);
 
-	request.onload = function () {
-		var bufferSize = 2 * inContext.sampleRate;
-		convolver.buffer = inContext.createBuffer(2, bufferSize, inContext.sampleRate);
+		// load the impulse response asynchronously
+		var request = new XMLHttpRequest();
+		request.open("GET", "./Church-Schellingwoude.mp3", true);
+		request.responseType = "arraybuffer";
 
-		context.decodeAudioData(request.response, function(buffer) {
-			convolver.buffer = buffer;
-			console.log("loaded impulse response");
-		}, function (error) {
-			console.log("error " + error);
-		});
+		request.onload = function () {
+			var bufferSize = 2 * inContext.sampleRate;
+			convolver.buffer = inContext.createBuffer(2, bufferSize, inContext.sampleRate);
+
+			context.decodeAudioData(request.response, function(buffer) {
+				convolver.buffer = buffer;
+				console.log("loaded impulse response");
+			}, function (error) {
+				console.log("error " + error);
+			});
+		}
+
+		request.send();
+	} else {
+		// ask context to create do-nothing gain node.
+		convolver = inContext.createGain();
+
+		// Wiring
+		convolver.connect(inContext.destination);
 	}
-
-	request.send();
 
 	return convolver;
 }
@@ -198,7 +215,7 @@ function init() {
 
 	var theAnalyzer = createVolumeMeter(context);
 
-	var theReverb = createReverb(context);
+	var theReverb = createReverb(context, false);
 
 	theReverb.connect(theAnalyzer);
 
